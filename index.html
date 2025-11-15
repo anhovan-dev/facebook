@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facebook Ad Policy Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1"
+  }
+}
+</script>
+    <style>
+      :root {
+        --color-bg: #0c143b;
+        --color-primary: #2563eb; /* blue-600 */
+        --color-primary-hover: #1d4ed8; /* blue-700 */
+        --color-primary-disabled: #1e40af; /* blue-800 */
+        --color-surface-1: rgba(17, 24, 39, 0.3); /* gray-900/30 */
+        --color-surface-2: #1e294b;
+        --color-border: rgba(59, 130, 246, 0.2); /* blue-500/20 */
+        --color-border-focus: #3b82f6; /* blue-500 */
+        --color-border-subtle: rgba(30, 64, 175, 0.5); /* blue-800/50 */
+        --color-text-header: #ffffff;
+        --color-text-body: #d1d5db; /* gray-300 */
+        --color-text-accent: #bfdbfe; /* blue-200 */
+        --color-icon-accent: #60a5fa; /* blue-400 */
+        --color-icon-warning: #facc15; /* yellow-400 */
+        --color-icon-success: #4ade80; /* green-400 */
+      }
+    </style>
+</head>
+  <body class="bg-[var(--color-bg)]">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
