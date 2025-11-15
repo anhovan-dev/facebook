@@ -59,7 +59,7 @@ export const StyleGuide = ({ themeResult, logo }: StyleGuideProps): React.JSX.El
                 
                 <div>
                     <h4 className="font-semibold text-[var(--color-text-header)] mb-3">Color Palette</h4>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {Object.entries(colors).map(([name, hex]) => (
                              <ColorSwatch key={name} name={name} hex={hex} />
                         ))}
@@ -72,7 +72,7 @@ export const StyleGuide = ({ themeResult, logo }: StyleGuideProps): React.JSX.El
                         Design Rationale & Recommendations
                     </h4>
                      <div className="flex items-start gap-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                        {logo && <img src={logo} alt="Brand Logo" className="w-12 h-12 object-contain flex-shrink-0 mt-1" />}
+                        {logo && <img src={logo} alt="Brand Logo" className="w-12 h-12 object-contain flex-shrink-0 mt-1 bg-white/10 p-1 rounded-md" />}
                         <p className="text-sm text-gray-300 whitespace-pre-wrap">{explanation}</p>
                     </div>
                 </div>

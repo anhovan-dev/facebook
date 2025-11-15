@@ -1,12 +1,11 @@
 
 import React from 'react';
 import type { HistoryEntry } from '../types';
-import { ClockIcon, TrashIcon } from './icons';
+import { ClockIcon } from './icons';
 
 interface HistoryPanelProps {
     history: HistoryEntry[];
     onSelect: (id: string) => void;
-    onClear: () => void;
 }
 
 const getStatusPillClasses = (status: HistoryEntry['status']): string => {
@@ -62,7 +61,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onSelect }) => {
     );
 };
 
-export const HistoryPanel = ({ history, onSelect, onClear }: HistoryPanelProps): React.JSX.Element => {
+export const HistoryPanel = ({ history, onSelect }: HistoryPanelProps): React.JSX.Element => {
     return (
         <div className="bg-[var(--color-surface-1)] backdrop-blur-sm rounded-xl p-5 border border-[var(--color-border)]">
             <div className="flex items-center justify-between">
@@ -70,14 +69,6 @@ export const HistoryPanel = ({ history, onSelect, onClear }: HistoryPanelProps):
                     <ClockIcon className="w-6 h-6 text-[var(--color-icon-accent)]" />
                     <h3 className="ml-3 text-lg font-semibold text-[var(--color-text-header)]">Lịch sử kiểm tra</h3>
                 </div>
-                <button 
-                    onClick={onClear} 
-                    className="flex items-center text-xs text-gray-400 hover:text-red-400 transition-colors"
-                    title="Xóa lịch sử"
-                >
-                    <TrashIcon className="w-4 h-4 mr-1" />
-                    Xóa
-                </button>
             </div>
             {history.length > 0 ? (
                 <ul className="mt-4 flex gap-4 overflow-x-auto pb-4">

@@ -24,7 +24,6 @@ export const PencilIcon = ({ className }: { className?: string }): React.JSX.Ele
   </svg>
 );
 
-// FIX: Added missing PaletteIcon export.
 export const PaletteIcon = ({ className }: { className?: string }): React.JSX.Element => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402a3.75 3.75 0 0 0-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304Z" />
@@ -41,7 +40,7 @@ export const RobotIcon = ({ className }: { className?: string }): React.JSX.Elem
 
 export const LightBulbIcon = ({ className }: { className?: string }): React.JSX.Element => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c.401-.11 1.116-.324 2.112-.684m7.5 0c-.401-.11-1.116-.324-2.112-.684m7.5 0a7.5 7.5 0 0 0 3.75 0c-.401.11-1.116.324-2.112.684M9 12a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c.401-.11 1.116-.324 2.112-.684m7.5 0c-.401-.11-1.116-.324-2.112-.684m7.5 0a7.5 7.5 0 0 0 3.75 0c-.401.11-1.116.324-2.112-.684M9 12a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" />
   </svg>
 );
 
@@ -115,4 +114,22 @@ export const QuestionMarkCircleIcon = ({ className }: { className?: string }): R
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
   </svg>
+);
+
+export const ExclamationTriangleIcon = ({ className }: { className?: string }): React.JSX.Element => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+  </svg>
+);
+
+export const CubeIcon = ({ className }: { className?: string }): React.JSX.Element => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+    </svg>
+);
+
+export const UserIcon = ({ className }: { className?: string }): React.JSX.Element => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+    </svg>
 );

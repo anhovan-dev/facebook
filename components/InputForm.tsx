@@ -1,27 +1,30 @@
 
-import React, { useCallback } from 'react';
-import { DocumentIcon, ScaleIcon, PencilIcon, CheckCircleIcon, PhotoIcon, XCircleIcon } from './icons';
+import React, { useCallback, useState } from 'react';
+import { DocumentIcon, ScaleIcon, PencilIcon, CheckCircleIcon, PhotoIcon, XCircleIcon, PaletteIcon } from './icons';
 import { CONTENT_TYPE_OPTIONS, CHECK_TYPE_OPTIONS } from '../constants';
-import type { ImageFile } from '../types';
+import type { ImageFile, AppError } from '../types';
+import { fileToDataUrl } from '../utils/imageUtils';
 
 interface InputFormProps {
   content: string;
   setContent: (value: string) => void;
   files: ImageFile[];
   setFiles: React.Dispatch<React.SetStateAction<ImageFile[]>>;
+  logo: File | null;
+  setLogo: (file: File | null) => void;
   contentType: string;
   setContentType: (value: string) => void;
   checkType: string;
   setCheckType: (value: string) => void;
   onCheck: () => void;
   isLoading: boolean;
-  setError: (value: string | null) => void;
+  setError: (value: AppError | null) => void;
 }
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
+const MAX_LOGO_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
 const CustomSelect = ({ label, icon, value, onChange, options }: {
   label: string;
@@ -57,6 +60,8 @@ export const InputForm = ({
   setContent,
   files,
   setFiles,
+  logo,
+  setLogo,
   contentType,
   setContentType,
   checkType,
@@ -65,40 +70,105 @@ export const InputForm = ({
   isLoading,
   setError,
 }: InputFormProps): React.JSX.Element => {
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = useCallback((newFiles: FileList | null) => {
     setError(null);
-    if (newFiles) {
-       if (files.length + newFiles.length > MAX_FILES) {
-        setError(`Bạn chỉ có thể tải lên tối đa ${MAX_FILES} hình ảnh.`);
-        return;
-      }
+    if (!newFiles) return;
 
-      const addedFiles: ImageFile[] = [];
-      const oversizedFiles: string[] = [];
-
-      Array.from(newFiles).forEach(file => {
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-          oversizedFiles.push(file.name);
-          return;
-        }
-        addedFiles.push({
-          id: crypto.randomUUID(),
-          file,
-          preview: URL.createObjectURL(file),
-        });
-      });
-      
-      if (oversizedFiles.length > 0) {
-        setError(`Các tệp sau vượt quá giới hạn ${MAX_FILE_SIZE_MB}MB: ${oversizedFiles.join(', ')}`);
-      }
-
-      setFiles(prev => [...prev, ...addedFiles]);
+    if (files.length + newFiles.length > MAX_FILES) {
+      setError({ code: 'VALIDATION_ERROR', message: `Bạn chỉ có thể tải lên tối đa ${MAX_FILES} hình ảnh.` });
+      return;
     }
-  }, [setFiles, files.length, setError]);
 
+    const validFiles: File[] = [];
+    const oversizedFiles: string[] = [];
+    Array.from(newFiles).forEach(file => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        oversizedFiles.push(file.name);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (oversizedFiles.length > 0) {
+      setError({ code: 'VALIDATION_ERROR', message: `Các tệp sau vượt quá giới hạn ${MAX_FILE_SIZE_MB}MB: ${oversizedFiles.join(', ')}` });
+    }
+    
+    if(validFiles.length === 0) return;
+
+    validFiles.forEach(file => {
+        const id = crypto.randomUUID();
+        const newFileEntry: ImageFile = {
+            id,
+            file,
+            preview: '', // Will be filled by fileToDataUrl
+            progress: 0,
+        };
+
+        setFiles(prev => [...prev, newFileEntry]);
+
+        const interval = setInterval(() => {
+            setFiles(currentFiles => {
+                if (!currentFiles.some(f => f.id === id)) {
+                    clearInterval(interval);
+                    return currentFiles;
+                }
+                return currentFiles.map(f => {
+                    if (f.id === id && f.progress < 100) {
+                        const newProgress = Math.min(f.progress + 10, 100);
+                        if (newProgress === 100) {
+                            clearInterval(interval);
+                        }
+                        return { ...f, progress: newProgress };
+                    }
+                    return f;
+                });
+            });
+        }, 150);
+
+        fileToDataUrl(file)
+            .then(dataUrl => {
+                setFiles(currentFiles =>
+                    currentFiles.map(f => (f.id === id ? { ...f, preview: dataUrl } : f))
+                );
+            })
+            .catch(err => {
+                console.error("Error reading file:", err);
+                clearInterval(interval);
+                setFiles(currentFiles => currentFiles.filter(f => f.id !== id));
+                setError({ code: 'FILE_READ_ERROR', message: `Không thể đọc tệp: ${file.name}` });
+            });
+    });
+  }, [files.length, setFiles, setError]);
+  
+  const handleLogoChange = (newFile: File | null | undefined) => {
+    setError(null);
+    if (!newFile) {
+        setLogo(null);
+        return;
+    };
+
+    if (newFile.size > MAX_LOGO_SIZE_BYTES) {
+        setError({ code: 'VALIDATION_ERROR', message: `Logo vượt quá giới hạn dung lượng 2MB.`});
+        return;
+    }
+    setLogo(newFile);
+  }
+
+  const onDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  
   const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     handleFileChange(event.dataTransfer.files);
   }, [handleFileChange]);
 
@@ -107,15 +177,8 @@ export const InputForm = ({
   };
 
   const removeFile = (idToRemove: string) => {
-    setFiles(currentFiles => {
-      const fileToRemove = currentFiles.find(f => f.id === idToRemove);
-      if (fileToRemove) {
-        URL.revokeObjectURL(fileToRemove.preview);
-      }
-      return currentFiles.filter(f => f.id !== idToRemove);
-    });
+    setFiles(currentFiles => currentFiles.filter(f => f.id !== idToRemove));
   };
-
 
   return (
     <div className="bg-[var(--color-surface-1)] backdrop-blur-sm rounded-xl p-6 border border-[var(--color-border)] h-full">
@@ -163,7 +226,9 @@ export const InputForm = ({
         <div 
           onDrop={onDrop}
           onDragOver={onDragOver}
-          className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-600 hover:border-[var(--color-border-focus)] transition-colors px-6 py-10"
+          onDragEnter={onDragEnter}
+          onDragLeave={onDragLeave}
+          className={`mt-2 flex justify-center rounded-lg border border-dashed transition-colors px-6 py-10 ${isDragging ? 'bg-blue-900/30 border-[var(--color-border-focus)]' : 'border-gray-600 hover:border-[var(--color-border-focus)]'}`}
         >
           <div className="text-center">
             <PhotoIcon className="mx-auto h-12 w-12 text-gray-500" />
@@ -184,20 +249,78 @@ export const InputForm = ({
         {files.length > 0 && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {files.map((imageFile) => (
-              <div key={imageFile.id} className="relative group">
-                <img src={imageFile.preview} alt={imageFile.file.name} className="h-24 w-full object-cover rounded-md" />
-                <button
-                  onClick={() => removeFile(imageFile.id)}
-                  className="absolute top-1 right-1 bg-black/50 p-0.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Remove file"
-                >
-                  <XCircleIcon className="w-5 h-5" />
-                </button>
+              <div key={imageFile.id} className="relative group aspect-square rounded-md overflow-hidden border border-[var(--color-border-subtle)] bg-gray-800">
+                {imageFile.preview && (
+                    <img 
+                        src={imageFile.preview} 
+                        alt={imageFile.file.name} 
+                        className="h-full w-full object-cover" 
+                    />
+                )}
+                
+                {imageFile.progress < 100 && (
+                  <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-2 text-center">
+                      <p className="text-white text-xs mb-2 truncate w-full">{imageFile.file.name}</p>
+                      <div className="w-11/12 bg-gray-600 rounded-full h-1.5">
+                        <div className="bg-[var(--color-primary)] h-1.5 rounded-full" style={{ width: `${imageFile.progress}%` }}></div>
+                      </div>
+                  </div>
+                )}
+              
+                {imageFile.progress === 100 && (
+                    <button
+                      onClick={() => removeFile(imageFile.id)}
+                      className="absolute top-1 right-1 bg-black/50 p-0.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Remove file"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                    </button>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+       <div className="mt-6">
+        <label className="flex items-center text-sm font-medium text-[var(--color-text-accent)] mb-2">
+            <PaletteIcon className="w-5 h-5 text-teal-400" />
+            <span className="ml-2">Logo thương hiệu (tùy chọn)</span>
+        </label>
+        {logo ? (
+            <div className="mt-2 flex items-center gap-4 p-3 bg-[var(--color-surface-2)] rounded-lg border border-[var(--color-border-subtle)]">
+            <img
+                src={URL.createObjectURL(logo)}
+                alt="Logo preview"
+                className="h-14 w-14 object-contain rounded-md bg-white/10 p-1"
+            />
+            <div className="flex-grow min-w-0">
+                <p className="text-sm font-medium text-white truncate">{logo.name}</p>
+                <p className="text-xs text-gray-400">{(logo.size / 1024).toFixed(1)} KB</p>
+            </div>
+            <button
+                onClick={() => handleLogoChange(null)}
+                className="bg-black/50 p-0.5 rounded-full text-white flex-shrink-0"
+                aria-label="Remove logo"
+            >
+                <XCircleIcon className="w-5 h-5" />
+            </button>
+            </div>
+        ) : (
+            <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-600 hover:border-[var(--color-border-focus)] transition-colors px-6 py-4">
+            <div className="text-center">
+                <label
+                htmlFor="logo-upload"
+                className="relative cursor-pointer rounded-md font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
+                >
+                <span>Tải lên logo</span>
+                <input id="logo-upload" name="logo-upload" type="file" className="sr-only" onChange={(e) => handleLogoChange(e.target.files?.[0])} accept="image/png, image/jpeg, image/svg+xml" />
+                </label>
+                <p className="text-xs text-gray-500 mt-1">PNG, JPG, SVG. Tối đa 2MB.</p>
+            </div>
+            </div>
+        )}
+        </div>
 
       <div className="mt-8">
         <button

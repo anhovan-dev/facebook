@@ -1,8 +1,58 @@
-import React from 'react';
-import type { PolicyAnalysisResult, Violation, ImageAnalysis } from '../types';
-import { RobotIcon, SparklesIcon, CheckCircleIcon, LightBulbIcon, PencilIcon, PhotoIcon, DownloadIcon } from './icons';
+import React, { useState } from 'react';
+import type { PolicyAnalysisResult, Violation, ImageAnalysis, AppError } from '../types';
+import { RobotIcon, SparklesIcon, CheckCircleIcon, LightBulbIcon, PencilIcon, PhotoIcon, DownloadIcon, ExclamationTriangleIcon, ChevronDownIcon, ResizeIcon } from './icons';
 import { InfoCard } from './InfoCard';
 import { exportToCsv, exportToPdf } from '../utils/exportUtils';
+
+
+export const ErrorState = ({ error }: { error: AppError }): React.JSX.Element => {
+    const [showDetails, setShowDetails] = useState(false);
+
+    return (
+        <div className="bg-red-900/20 backdrop-blur-sm rounded-xl p-5 border border-red-500/50">
+            <div className="flex items-center">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-400 flex-shrink-0" />
+                <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-red-200">Đã xảy ra lỗi</h3>
+                    <p className="mt-1 text-red-300">{error.message}</p>
+                </div>
+            </div>
+            
+            {(error.details || (error.troubleshooting && error.troubleshooting.length > 0)) && (
+                <div className="mt-4">
+                    <button onClick={() => setShowDetails(!showDetails)} className="flex items-center text-sm text-red-300 hover:text-red-200">
+                        {showDetails ? 'Ẩn chi tiết' : 'Hiện chi tiết & Gợi ý khắc phục'}
+                        <ChevronDownIcon className={`w-4 h-4 ml-2 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showDetails && (
+                        <div className="mt-3 pl-4 border-l-2 border-red-500/50 space-y-4">
+                            {error.troubleshooting && error.troubleshooting.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold text-red-200 flex items-center">
+                                        <LightBulbIcon className="w-5 h-5 mr-2" />
+                                        Gợi ý khắc phục
+                                    </h4>
+                                    <ul className="list-disc list-inside mt-2 space-y-1 text-red-300">
+                                        {error.troubleshooting.map((tip, i) => <li key={i}>{tip}</li>)}
+                                    </ul>
+                                </div>
+                            )}
+                            {error.details && (
+                                <div>
+                                    <h4 className="font-semibold text-red-200">Chi tiết kỹ thuật</h4>
+                                    <pre className="mt-2 text-xs bg-black/30 p-2 rounded-md whitespace-pre-wrap font-mono text-red-300/80">
+                                        Error Code: {error.code}{'\n'}
+                                        {error.details}
+                                    </pre>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const InitialState = (): React.JSX.Element => (
@@ -117,6 +167,8 @@ const ImageAnalysisCard = ({ analysis }: { analysis: ImageAnalysis }): React.JSX
 );
 
 const ResultContent = ({ result }: { result: PolicyAnalysisResult }): React.JSX.Element => {
+    const [isContentExpanded, setIsContentExpanded] = useState(false);
+
     const exportActions = (
         <div className="flex gap-2">
             <button
@@ -136,6 +188,16 @@ const ResultContent = ({ result }: { result: PolicyAnalysisResult }): React.JSX.
                 CSV
             </button>
         </div>
+    );
+
+    const contentToggle = (
+        <button
+            onClick={() => setIsContentExpanded(!isContentExpanded)}
+            className="flex items-center text-xs px-2 py-1 bg-transparent text-gray-300 hover:bg-[var(--color-surface-2)] hover:text-white rounded-md transition-colors border border-transparent hover:border-[var(--color-border-subtle)]"
+        >
+            <ResizeIcon className={`w-4 h-4 mr-1.5 transition-transform duration-300 ${isContentExpanded ? 'rotate-45' : ''}`} />
+            {isContentExpanded ? 'Thu gọn' : 'Mở rộng'}
+        </button>
     );
     
     return (
@@ -170,22 +232,31 @@ const ResultContent = ({ result }: { result: PolicyAnalysisResult }): React.JSX.
             
             {result.imageAnalysis && <ImageAnalysisCard analysis={result.imageAnalysis} />}
 
-            <InfoCard title="Nội dung đã sửa (Văn bản)" icon={<PencilIcon className="w-6 h-6 text-[var(--color-icon-success)]" />}>
-                <pre className="whitespace-pre-wrap bg-gray-800/50 rounded-lg p-3 text-sm text-gray-200 font-sans border border-gray-700 max-h-60 overflow-y-auto">
-                    {result.fixedContent}
-                </pre>
+            <InfoCard 
+                title="Nội dung đã sửa (Văn bản)" 
+                icon={<PencilIcon className="w-6 h-6 text-[var(--color-icon-success)]" />}
+                topRightContent={contentToggle}
+            >
+                <div className="relative">
+                    <pre className={`whitespace-pre-wrap bg-gray-800/50 rounded-lg p-3 text-sm text-gray-200 font-sans border border-gray-700 overflow-hidden transition-all duration-500 ease-in-out ${isContentExpanded ? 'max-h-[1000px]' : 'max-h-60'}`}>
+                        {result.fixedContent}
+                    </pre>
+                     {!isContentExpanded && (
+                        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--color-surface-1)] to-transparent pointer-events-none rounded-b-lg"></div>
+                    )}
+                </div>
             </InfoCard>
         </div>
     );
 }
 
-export const ResultsDisplay = ({ isLoading, result, error }: { isLoading: boolean; result: PolicyAnalysisResult | null, error: string | null }): React.JSX.Element => {
+export const ResultsDisplay = ({ isLoading, result, error }: { isLoading: boolean; result: PolicyAnalysisResult | null, error: AppError | null }): React.JSX.Element => {
+    if (error) {
+        return <ErrorState error={error} />;
+    }
+
     if (isLoading) {
         return <LoadingState />;
-    }
-    
-    if (error) {
-        return <InfoCard title="Lỗi" icon={<RobotIcon className="w-6 h-6 text-red-400" />}><p className="text-red-400">{error}</p></InfoCard>;
     }
     
     if (result) {

@@ -1,3 +1,10 @@
+export interface AppError {
+  code: string;
+  message: string;
+  details?: string;
+  troubleshooting?: string[];
+}
+
 export interface Violation {
   rule: string;
   explanation: string;
@@ -31,6 +38,7 @@ export interface ImageFile {
   id: string;
   file: File;
   preview: string;
+  progress: number;
 }
 
 export interface HistoryFile {
@@ -50,7 +58,11 @@ export interface HistoryEntry {
   originalCheckType: string;
 }
 
-// FIX: Added missing ThemeGenerationResult interface.
+export interface ImageInput {
+  data: string; // base64 encoded
+  mimeType: string;
+}
+
 export interface ThemeGenerationResult {
   colors: { [key: string]: string };
   explanation: string;
